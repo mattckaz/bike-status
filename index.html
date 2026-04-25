@@ -1,1 +1,373 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bike Deal Finder</title></head><body style="font-family:sans-serif;text-align:center;padding:80px;color:#374151"><h1>🚲 Bike Deal Finder</h1><p style="color:#6b7280">Dashboard will appear here after the first monitor run.</p></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="14400">
+  <title>Bike Deal Finder</title>
+  <style>
+    :root {
+      --indigo:#6366f1;--purple:#7c3aed;
+      --green:#16a34a;--green-100:#dcfce7;--green-700:#15803d;
+      --amber:#d97706;--amber-100:#fef3c7;
+      --gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-400:#9ca3af;
+      --gray-500:#6b7280;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
+      --shadow:0 4px 8px -2px rgba(0,0,0,.08),0 2px 4px -2px rgba(0,0,0,.04);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Inter",sans-serif;
+          background:#eef2f7;color:var(--gray-900);min-height:100vh}
+    .hero{background:linear-gradient(135deg,#312e81 0%,#4f46e5 55%,#7c3aed 100%);
+           padding:44px 24px 64px;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-60px;right:-60px;width:360px;height:360px;
+                  background:radial-gradient(circle,rgba(255,255,255,.07) 0%,transparent 65%);
+                  border-radius:50%;pointer-events:none}
+    .hero-inner{max-width:960px;margin:auto;position:relative;z-index:1}
+    .hero h1{font-size:30px;font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:8px}
+    .hero-sub{color:rgba(255,255,255,.65);font-size:14px;margin-bottom:22px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.11);
+           border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.88);
+           border-radius:20px;padding:5px 14px;font-size:12px;font-weight:500}
+    .live-dot{width:7px;height:7px;background:#4ade80;border-radius:50%;
+               animation:pulse 2.2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.45)}}
+    .container{max-width:960px;margin:-26px auto 0;padding:0 24px 56px;position:relative;z-index:2}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+    .stat-card{background:#fff;border-radius:14px;padding:18px 20px 16px;box-shadow:var(--shadow)}
+    .stat-label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;
+                 color:var(--gray-400);margin-bottom:6px}
+    .stat-value{font-size:26px;font-weight:700;color:var(--gray-900);line-height:1.1}
+    .stat-value.green{color:var(--green)}
+    .stat-value.sm{font-size:15px;font-weight:600}
+    .stat-sub{font-size:11px;color:var(--gray-400);margin-top:2px}
+    .card{background:#fff;border-radius:14px;box-shadow:var(--shadow);
+           padding:20px 22px;margin-bottom:16px}
+    .section-title{font-size:15px;font-weight:600;color:var(--gray-800);margin-bottom:4px}
+    .section-sub{font-size:12px;color:var(--gray-400);margin-bottom:16px}
+    /* Deals */
+    .deal-row{display:flex;gap:14px;align-items:flex-start;padding:14px 0;
+               border-bottom:1px solid var(--gray-100)}
+    .deal-row:last-child{border-bottom:none}
+    .deal-score{font-size:13px;font-weight:700;flex-shrink:0;width:52px;padding-top:2px}
+    .deal-title{font-size:14px;font-weight:600;margin-bottom:3px}
+    .deal-title a{color:var(--gray-900);text-decoration:none}
+    .deal-title a:hover{color:var(--indigo);text-decoration:underline}
+    .deal-meta{font-size:11px;color:var(--gray-400);margin-bottom:3px}
+    .deal-reason{font-size:12px;color:var(--gray-500)}
+    .no-deals{font-size:13px;color:var(--gray-400);font-style:italic;padding:8px 0}
+    /* Sources grid */
+    .sources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+    .source-chip{background:var(--gray-100);border-radius:8px;padding:10px 12px;
+                  border-left:3px solid var(--gray-200)}
+    .source-chip.dot-ok{border-left-color:var(--green)}
+    .source-chip.dot-err{border-left-color:#ef4444}
+    .source-chip.dot-pending{border-left-color:var(--gray-200)}
+    .src-name{display:block;font-size:12px;font-weight:600;color:var(--gray-800);margin-bottom:2px}
+    .src-meta{display:block;font-size:10px;color:var(--gray-400)}
+    /* Log */
+    .log-terminal{background:#0d1117;border-radius:8px;padding:16px;max-height:320px;
+                   overflow-y:auto;font-family:"SF Mono","Cascadia Code",ui-monospace,monospace;
+                   scrollbar-width:thin;scrollbar-color:#30363d transparent}
+    .log-line{font-size:11.5px;line-height:1.75;color:#8b949e}
+    .log-line.error{color:#f85149}.log-line.warn{color:#d29922}
+    .log-line.success{color:#3fb950}.log-line.sep{color:#4d5566;font-weight:600}
+    .footer{text-align:center;font-size:12px;color:var(--gray-400);padding-bottom:36px}
+    .footer a{color:var(--indigo);text-decoration:none}
+    @media(max-width:600px){
+      .hero{padding:28px 16px 52px}.hero h1{font-size:24px}
+      .container{padding:0 16px 36px}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .sources-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <h1>🚲 Bike Deal Finder</h1>
+    <p class="hero-sub">Watching 35 sources · Small 27.5" hardtail · $400–$900 · Near East Lansing, MI</p>
+    <div class="chips">
+      <span class="chip"><span class="live-dot"></span>Monitoring active</span>
+      <span class="chip">Checks every 4 hours</span>
+      <span class="chip">Updated <time class="local-time" data-utc="2026-04-25T02:42:57.573542+00:00">–</time></span>
+      <span class="chip">2 deals found all-time</span>
+    </div>
+  </div>
+</header>
+<main class="container">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Deals Found</div>
+      <div class="stat-value  green">2</div>
+      <div class="stat-sub">all time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Last Check</div>
+      <div class="stat-value sm"><time class="local-time" data-utc="2026-04-25T02:42:57.573013+00:00">–</time></div>
+      <div class="stat-sub">runs every 4 hours</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Sources</div>
+      <div class="stat-value">35</div>
+      <div class="stat-sub">shops monitored</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Coverage</div>
+      <div class="stat-value sm">22 API · 13 scraped</div>
+      <div class="stat-sub">Shopify + Playwright</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:10px">
+    <div class="section-title">Deals Found</div>
+    <div class="section-sub">All listings that scored 7+ / 10 — most recent first</div>
+  </div>
+  <div class="card">
+    
+            <div class="deal-row">
+              <div class="deal-score" style="color:#16a34a">★ 9/10</div>
+              <div class="deal-info">
+                <div class="deal-title"><a href="https://www.incycle.com/products/2026-specialized-rockhopper-sport" target="_blank">2026 Specialized Rockhopper Sport</a></div>
+                <div class="deal-meta">Incycle · $850 · Apr 25, 2026</div>
+                <div class="deal-reason">2026 Tier 1 Specialized Rockhopper Sport in confirmed Small 27.5", hydraulic MT200 brakes, CUES 1x drivetrain, quality fork—exceptional spec at $849.99 for a current-year model.</div>
+              </div>
+            </div>
+            <div class="deal-row">
+              <div class="deal-score" style="color:#16a34a">★ 8/10</div>
+              <div class="deal-info">
+                <div class="deal-title"><a href="https://bicyclewarehouse.com/products/talon-4-2025" target="_blank">Talon 4 (2026)</a></div>
+                <div class="deal-meta">Bicycle Warehouse · $650 · Apr 24, 2026</div>
+                <div class="deal-reason">Giant Talon 4 (2026) in Small at $650 hits TIER 2 spec with 1x drivetrain, aluminum hardtail, and quality components at entry-bike pricing; size confirmed available.</div>
+              </div>
+            </div>
+  </div>
+
+  <div style="margin-bottom:10px;margin-top:8px">
+    <div class="section-title">Source Status</div>
+    <div class="section-sub">35 sources · green = last run OK · red = error</div>
+  </div>
+  <div class="card">
+    <div class="sources-grid">
+        <div class="source-chip dot-ok">
+          <span class="src-name">The Pro's Closet</span>
+          <span class="src-meta">02:41 AM · 102 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Jenson USA</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Worldwide Cyclery</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Fanatik Bike</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Cambria Bike</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Bicycle Warehouse</span>
+          <span class="src-meta">02:41 AM · 10 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Mike's Bikes</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">ERIK'S Bike Shop</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Universal Cycles</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Velomine</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Bicycle Blue Book</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Competitive Cyclist</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Backcountry</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Incycle</span>
+          <span class="src-meta">02:41 AM · 4 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Colorado Cyclist</span>
+          <span class="src-meta">02:41 AM · 17 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">BikesOnline</span>
+          <span class="src-meta">02:41 AM · 7 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Kona (Direct)</span>
+          <span class="src-meta">02:41 AM · 12 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Fuji (Direct)</span>
+          <span class="src-meta">02:41 AM · 13 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">GT Bicycles (Direct)</span>
+          <span class="src-meta">02:41 AM · 7 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Diamondback (Direct)</span>
+          <span class="src-meta">02:41 AM · 20 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Ari Bikes</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Trek</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Giant</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Specialized</span>
+          <span class="src-meta">02:41 AM · 1 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Marin</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Dick's Sporting Goods</span>
+          <span class="src-meta">02:41 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-err">
+          <span class="src-name">REI</span>
+          <span class="src-meta">02:42 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Pinkbike Deals</span>
+          <span class="src-meta">02:42 AM · 26 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Pinkbike Buy/Sell</span>
+          <span class="src-meta">02:42 AM · 1 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">SweetWater Bicycles</span>
+          <span class="src-meta">02:42 AM · 1 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Trailhead Cycling</span>
+          <span class="src-meta">02:42 AM · 29 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">88 Cycling</span>
+          <span class="src-meta">02:42 AM · 14 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Canyon</span>
+          <span class="src-meta">02:42 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-ok">
+          <span class="src-name">Batch Bicycles</span>
+          <span class="src-meta">02:42 AM · 0 evaluated</span>
+        </div>
+        <div class="source-chip dot-err">
+          <span class="src-name">REI Sale</span>
+          <span class="src-meta">02:42 AM · 0 evaluated</span>
+        </div></div>
+  </div>
+
+  <div style="margin-bottom:10px;margin-top:8px">
+    <div class="section-title">Recent Activity</div>
+  </div>
+  <div class="card">
+    <div class="log-terminal"><div class="log-line">[2026-04-25 02:41:20]   BikesOnline (Shopify API): 7 product(s) in budget range</div>
+<div class="log-line">[2026-04-25 02:41:20] Checking: Kona (Direct) (Shopify API)</div>
+<div class="log-line">[2026-04-25 02:41:21]   Kona (Direct) (Shopify API): 12 product(s) in budget range</div>
+<div class="log-line">[2026-04-25 02:41:21] Checking: Fuji (Direct) (Shopify API)</div>
+<div class="log-line">[2026-04-25 02:41:21]   Fuji (Direct) (Shopify API): 13 product(s) in budget range</div>
+<div class="log-line">[2026-04-25 02:41:21] Checking: GT Bicycles (Direct) (Shopify API)</div>
+<div class="log-line">[2026-04-25 02:41:22]   GT Bicycles (Direct) (Shopify API): 7 product(s) in budget range</div>
+<div class="log-line">[2026-04-25 02:41:22] Checking: Diamondback (Direct) (Shopify API)</div>
+<div class="log-line">[2026-04-25 02:41:23]   Diamondback (Direct) (Shopify API): 20 product(s) in budget range</div>
+<div class="log-line">[2026-04-25 02:41:23] Checking: Ari Bikes (Shopify API)</div>
+<div class="log-line">[2026-04-25 02:41:24]   Ari Bikes (Shopify API): 0 product(s) in budget range</div>
+<div class="log-line">[2026-04-25 02:41:25] Checking: Trek</div>
+<div class="log-line">[2026-04-25 02:41:30]   Trek: no API responses captured — falling back to DOM extraction</div>
+<div class="log-line">[2026-04-25 02:41:30]   Trek (DOM): 0 price elements found</div>
+<div class="log-line">[2026-04-25 02:41:32] Checking: Giant</div>
+<div class="log-line">[2026-04-25 02:41:38]   Giant: no API responses captured — falling back to DOM extraction</div>
+<div class="log-line">[2026-04-25 02:41:38]   Giant (DOM): 0 price elements found</div>
+<div class="log-line">[2026-04-25 02:41:40] Checking: Specialized</div>
+<div class="log-line">[2026-04-25 02:41:44]   Specialized: no API responses captured — falling back to DOM extraction</div>
+<div class="log-line">[2026-04-25 02:41:44]   Specialized (DOM): 6 price elements found</div>
+<div class="log-line">[2026-04-25 02:41:46] Checking: Marin</div>
+<div class="log-line">[2026-04-25 02:41:51]   Marin: no API responses captured — falling back to DOM extraction</div>
+<div class="log-line">[2026-04-25 02:41:51]   Marin (DOM): 0 price elements found</div>
+<div class="log-line">[2026-04-25 02:41:53] Checking: Dick's Sporting Goods</div>
+<div class="log-line">[2026-04-25 02:41:58]   Dick's Sporting Goods (DOM): 0 price elements found</div>
+<div class="log-line">[2026-04-25 02:42:00] Checking: REI</div>
+<div class="log-line error">[2026-04-25 02:42:00]   ERROR on REI: Page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.rei.com/c/hardtail-mountain-bikes?r=q%3A27.5</div>
+<div class="log-line">Call log:</div>
+<div class="log-line">  - navigating to "https://www.rei.com/c/hardtail-mountain-bikes?r=q%3A27.5", waiting until "domcontentloaded"</div>
+<div class="log-line"></div>
+<div class="log-line">[2026-04-25 02:42:02] Checking: Pinkbike Deals</div>
+<div class="log-line">[2026-04-25 02:42:08]     [0/10] Specialized Status 2 170 DH Complete Mountain Bike 2025 - S4 — reject</div>
+<div class="log-line">[2026-04-25 02:42:08]     (25 listing(s) pre-filtered — saved 25 Claude calls)</div>
+<div class="log-line">[2026-04-25 02:42:10] Checking: Pinkbike Buy/Sell</div>
+<div class="log-line">[2026-04-25 02:42:14]     (1 listing(s) pre-filtered — saved 1 Claude calls)</div>
+<div class="log-line">[2026-04-25 02:42:16] Checking: SweetWater Bicycles</div>
+<div class="log-line">[2026-04-25 02:42:20]   SweetWater Bicycles (DOM): 1 price elements found</div>
+<div class="log-line">[2026-04-25 02:42:22] Checking: Trailhead Cycling</div>
+<div class="log-line">[2026-04-25 02:42:29]   Trailhead Cycling (DOM): 29 price elements found</div>
+<div class="log-line">[2026-04-25 02:42:31] Checking: 88 Cycling</div>
+<div class="log-line">[2026-04-25 02:42:38]   88 Cycling (DOM): 14 price elements found</div>
+<div class="log-line">[2026-04-25 02:42:40] Checking: Canyon</div>
+<div class="log-line">[2026-04-25 02:42:45]   Canyon (DOM): 2 price elements found</div>
+<div class="log-line">[2026-04-25 02:42:47] Checking: Batch Bicycles</div>
+<div class="log-line">[2026-04-25 02:42:53]   Batch Bicycles (DOM): 0 price elements found</div>
+<div class="log-line">[2026-04-25 02:42:55] Checking: REI Sale</div>
+<div class="log-line error">[2026-04-25 02:42:55]   ERROR on REI Sale: Page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.rei.com/c/hardtail-mountain-bikes?r=q%3A27.5&r=sale%3Atrue</div>
+<div class="log-line">Call log:</div>
+<div class="log-line">  - navigating to "https://www.rei.com/c/hardtail-mountain-bikes?r=q%3A27.5&r=sale%3Atrue", waiting until "domcontentloaded"</div>
+<div class="log-line"></div>
+</div>
+  </div>
+</main>
+<footer class="footer">
+  <a href="https://mattckaz.github.io/bike-status/">https://mattckaz.github.io/bike-status/</a>
+  &nbsp;·&nbsp; Rider: 5'5", beginner, East Lansing MI
+  &nbsp;·&nbsp; Alert threshold: 7/10
+</footer>
+<script>
+  document.querySelectorAll('time.local-time[data-utc]').forEach(function(el) {
+    var raw = el.dataset.utc;
+    if (!raw) return;
+    try {
+      var d = new Date(raw);
+      if (isNaN(d)) return;
+      el.textContent = d.toLocaleString(undefined, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      });
+    } catch(e) {}
+  });
+  // Auto-scroll log to bottom
+  var log = document.querySelector('.log-terminal');
+  if (log) log.scrollTop = log.scrollHeight;
+</script>
+</body>
+</html>
